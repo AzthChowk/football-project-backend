@@ -6,6 +6,7 @@ import { checkMongoIdValidity } from "../../utils/utils.js";
 import { playerValiditySchema } from "./player-validation.js";
 import { Team } from "../team/teamModel.js";
 
+import mongoose from "mongoose";
 const router = express.Router();
 
 //CREATE
@@ -30,26 +31,57 @@ router.post("/player/create", isAdmin, async (req, res) => {
 //get the player
 router.post("/players", async (req, res) => {
   try {
-    const playersList = await Player.find({});
+    const playersList = await Player.aggregate([
+      {
+        $match: {},
+      },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "currentClub",
+          foreignField: "_id",
+          as: "result",
+        },
+      },
+      {
+        $project: {
+          fullName: {
+            $concat: ["$firstName", " ", "$middleName", " ", "$lastName"],
+          },
+          clubName: { $first: "$result.name" },
+          playerImage: 1,
+          position: 1,
+          dob: 1,
+          nationality: 1,
+        },
+      },
+      {
+        $sort: { fullName: 1 },
+      },
+    ]);
 
     return res.status(200).send(playersList);
   } catch (error) {
     return res.status(400).send(error.message);
   }
 });
+
 //get the player
 router.post("/player/:id", async (req, res) => {
   const inputPlayerId = req.params.id;
+
+  //check mongoid validiity
   const resultOfMongoIdValidityCheck = checkMongoIdValidity(inputPlayerId);
+
   if (!resultOfMongoIdValidityCheck) {
     return res.status(400).send("The MongoId is not valid.");
   }
+
   try {
-    let player = await Player.findOne({ _id: inputPlayerId });
     const teamName = await Player.aggregate([
       {
         $match: {
-          _id: "64e9716bf7f813906b3166cf",
+          _id: new mongoose.Types.ObjectId(inputPlayerId),
         },
       },
       {
@@ -60,8 +92,16 @@ router.post("/player/:id", async (req, res) => {
           as: "result",
         },
       },
+      {
+        $project: {
+          firstName: 1,
+          clubName: { $first: "$result.name" },
+        },
+      },
     ]);
+
     console.log("hi", teamName);
+    console.log(teamName[0].result);
 
     // const teamName = await Team.findOne({ _id: player.currentClub });
     // console.log(teamName.name);
@@ -93,7 +133,7 @@ export default router;
 //       fullname: {
 //         $concat: ["$firstName", " ", "$middleName", " ", "$lastName"],
 //       },
-//       result: 1,
+//       clubName: { $first: "$result.name" },
 //     },
 //   },
 // ];

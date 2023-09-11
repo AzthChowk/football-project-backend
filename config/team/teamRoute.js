@@ -23,7 +23,7 @@ router.post("/team/create", isAdmin, async (req, res) => {
 });
 
 // GET ALL TEAMS
-router.get("/teams", async (req, res) => {
+router.post("/teams", async (req, res) => {
   const teamList = await Team.find({});
   if (!teamList) {
     res.status(400).send({

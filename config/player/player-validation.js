@@ -2,7 +2,7 @@ import Joi from "joi";
 
 export const playerValiditySchema = Joi.object({
   firstName: Joi.string().min(2).max(25).required(),
-  middleName: Joi.string(),
+  middleName: Joi.string().allow(null),
   lastName: Joi.string().min(2).max(25).required(),
   playerImage: Joi.string().required(),
   position: Joi.string().min(4).max(15).required(),

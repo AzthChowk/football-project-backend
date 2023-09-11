@@ -1,50 +1,46 @@
 import bcrypt from "bcrypt";
 import express from "express";
-import { Admin } from "./adminModel.js";
-import Joi from "joi";
-
 import jwt from "jsonwebtoken";
-import { validateAdmin } from "./admin-validation.js";
+import { Admin } from "./adminModel.js";
 import { createAdmin } from "./admin-service.js";
+import { validateAdmin } from "./admin-validation.js";
 
 const router = express.Router();
 
 //POST
 router.post("/admin/create", validateAdmin, createAdmin);
 
-//LOGIN
-// extract email and password from req.body
-// validate inputId
-// find user with email
-// if not user throw error
-// compare password with hashed password
-// if not match, throw error
-// generate access CancellationToken
-// remove password from user Object
-// send response
+//login
 router.post("/login", async (req, res) => {
+  //extract email and password from req.body
   const loginCredentials = req.body;
 
+  // find the user in the database
   const findUser = await Admin.findOne({
     email: loginCredentials.email,
   });
 
+  //if not found, terminate
   if (!findUser) {
     return res
       .status(400)
       .send({ success: false, message: "Invalid Credentials." });
   }
 
+  // if found, compare the password using bcrypt
   const passwordMatch = await bcrypt.compare(
     loginCredentials.password, //normal password
     findUser.password //hashed password
   );
 
+  //if password does not match, terminate
   if (!passwordMatch) {
     return res
       .status(400)
       .send({ success: false, message: "Invalid Credentials." });
   }
+
+  //if password match, assign access token
   const accessToken = jwt.sign(
     { _id: findUser._id },
     process.env.JWT_ACCESS_TOKEN_SECRET,
@@ -58,14 +54,21 @@ router.post("/login", async (req, res) => {
 
 //FIND
 router.get("/admin/:id", async (req, res) => {
+  //extract input id from params
   const inputId = req.params.id;
+
+  //check the validity of MongoId
   const checkGivenIdMongoIdOrNot = ObjectId.isValid(inputId);
+
+  //if not valid, terminate
   if (!checkGivenIdMongoIdOrNot) {
     res.status(400).send({
       success: false,
       message: "ERROR, GIVEN ID IS NOT A VALID ID.",
     });
   }
+
+  //if valid, find the user
   try {
     const checkGivenIdExistOrNot = await Admin.findOne({ _id: inputId });
     console.log(checkGivenIdExistOrNot);

@@ -14,11 +14,10 @@ router.post("/news/create", isAdmin, validateNews, createNews);
 router.get("/news", async (req, res) => {
   try {
     const getNews = await News.find();
-    console.log(getNews);
     return res.status(200).send(getNews);
   } catch (error) {
     console.log(error.message);
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       message: "CANNOT GET NEWS",
     });

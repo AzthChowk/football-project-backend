@@ -3,6 +3,7 @@ import Joi from "joi";
 export const validateAdmin = async (req, res, next) => {
   const newAdmin = req.body;
 
+  //joi validation
   const schema = Joi.object({
     firstName: Joi.string().required(),
     middleName: Joi.string(),

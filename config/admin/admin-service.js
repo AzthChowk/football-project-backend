@@ -1,13 +1,18 @@
 import { Admin } from "./adminModel.js";
 
 export const createAdmin = async (req, res) => {
+  //validated data from joi - req.adminData
   const newAdminAfterValidation = req.adminData;
+
+  //encrypt the password
   const hashedPassword = await bcrypt.hash(
     newAdminAfterValidation.password,
     10
   );
   newAdminAfterValidation.password = hashedPassword;
   console.log(hashedPassword);
+
+  //insert into the database.
   try {
     await Admin.create(newAdminAfterValidation);
     return res.status(201).send({
@@ -15,10 +20,6 @@ export const createAdmin = async (req, res) => {
       message: "ADMIN CREATED SUCCESSFUL.",
     });
   } catch (error) {
-    console.log({
-      success: false,
-      message: error.message,
-    });
     return res.status(400).send({
       success: false,
       message: error.message,

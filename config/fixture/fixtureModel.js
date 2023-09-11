@@ -2,11 +2,20 @@ import mongoose from "mongoose";
 
 const fixtureSchema = new mongoose.Schema({
   matchNumber: {
+    type: Number,
+    required: true,
+    unique: true,
+  },
+  time: {
     type: String,
     required: true,
   },
-  time: {
-    type: Number,
+  date: {
+    type: Date,
+    required: true,
+  },
+  playGround: {
+    type: String,
     required: true,
   },
   opponentOne: {
@@ -19,22 +28,7 @@ const fixtureSchema = new mongoose.Schema({
     required: true,
     ref: "Team",
   },
-  opponentOneScoredGoal: {
-    type: Number,
-    default: 0,
-  },
-  opponentTwoScoredGoal: {
-    type: Number,
 
-    default: 0,
-  },
-  winner: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: "Team",
-
-    default: "draw",
-  },
   // mainRefree: {
   //   type: String,
   //   required: true,
@@ -60,4 +54,4 @@ const fixtureSchema = new mongoose.Schema({
   //   maxlength: 35,
   // },
 });
-export const fixture = mongoose.model("Fixture", fixtureSchema);
+export const Fixture = mongoose.model("Fixture", fixtureSchema);

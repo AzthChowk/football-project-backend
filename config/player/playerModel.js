@@ -11,8 +11,6 @@ const playerSchema = new mongoose.Schema(
     },
     middleName: {
       type: String,
-      minlength: 2,
-      maxlength: 55,
       trim: true,
     },
     lastName: {
@@ -37,7 +35,7 @@ const playerSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      minlength: 3,
+      minlength: 2,
       maxlength: 20,
     },
     currentClub: {

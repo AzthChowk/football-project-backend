@@ -4,7 +4,6 @@ import { Admin } from "../config/admin/adminModel.js";
 export const isAdmin = async (req, res, next) => {
   const authToken = req?.headers?.authorization?.split(" ");
   const token = authToken[1];
-  console.log(token);
   if (!token) {
     return res.status(400).send({ success: false, message: "Unauthorized." });
   }
