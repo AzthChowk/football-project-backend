@@ -95,4 +95,43 @@ router.post("/fixtures", async (req, res) => {
   return res.status(200).send(fixtureList);
 });
 
+// get the fixture - up coming
+router.post("/fixtures/upcoming", async (req, res) => {
+  const fixtureList = await Fixture.aggregate([
+    {
+      $match: {},
+    },
+    {
+      $lookup: {
+        from: "teams",
+        localField: "opponentOne",
+        foreignField: "_id",
+        as: "opponentOneRes",
+      },
+    },
+    {
+      $lookup: {
+        from: "teams",
+        localField: "opponentTwo",
+        foreignField: "_id",
+        as: "opponentTwoRes",
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        matchNumber: 1,
+        opponentOneName: { $first: "$opponentOneRes.name" },
+        opponentOneLogo: { $first: "$opponentOneRes.logo" },
+        opponentTwoName: { $first: "$opponentTwoRes.name" },
+        opponentTwoLogo: { $first: "$opponentTwoRes.logo" },
+        time: 1,
+        date: 1,
+        playGround: 1,
+      },
+    },
+  ]);
+  return res.status(200).send(fixtureList);
+});
+
 export default router;

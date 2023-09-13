@@ -21,7 +21,7 @@ const newsModel = new mongoose.Schema({
     type: String,
     required: true,
   },
-  timeCreated: {
+  addedDate: {
     type: Date,
     default: Date.now,
   },

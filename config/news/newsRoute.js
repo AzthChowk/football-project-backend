@@ -24,4 +24,51 @@ router.get("/news", async (req, res) => {
   }
 });
 
+//GET latest news - home page
+router.get("/news/latest", async (req, res) => {
+  try {
+    const getLatestNews = await News.aggregate([
+      {
+        $match: {},
+      },
+      {
+        $limit: 4,
+      },
+      {
+        $sort: { addedDate: -1 },
+      },
+    ]);
+    return res.status(200).send(getLatestNews);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(400).send({
+      success: false,
+      message: "CANNOT GET NEWS",
+    });
+  }
+});
+//GET featured news - home page
+router.get("/news/featured", async (req, res) => {
+  try {
+    const getFeaturedNews = await News.aggregate([
+      {
+        $match: { isFeaturedNews: true },
+      },
+      {
+        $limit: 2,
+      },
+      {
+        $sort: { addedDate: -1 },
+      },
+    ]);
+    return res.status(200).send(getFeaturedNews);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(400).send({
+      success: false,
+      message: "CANNOT GET NEWS",
+    });
+  }
+});
+
 export default router;

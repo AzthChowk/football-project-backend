@@ -115,9 +115,57 @@ router.post("/matchresult/add", async (req, res) => {
 });
 
 // display results
-router.post("/results", async (req, res) => {
-  const results = await Result.find({});
-  return res.status(200).send(results);
+router.get("/results", async (req, res) => {
+  try {
+    const matchResults = await Result.aggregate([
+      {
+        $match: {},
+      },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "opponentOne",
+          foreignField: "_id",
+          as: "opponentOneName",
+        },
+      },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "opponentTwo",
+          foreignField: "_id",
+          as: "opponentTwoName",
+        },
+      },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "winnerId",
+          foreignField: "_id",
+          as: "winnerName",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          matchNumber: 1,
+          opponentOneName: { $first: "$opponentOneName.name" },
+          opponentTwoName: { $first: "$opponentTwoName.name" },
+          winnerName: { $first: "$winnerName.name" },
+          opponentOneGoalScore: 1,
+          opponentTwoGoalScore: 1,
+        },
+      },
+      {
+        $sort: {
+          matchNumber: 1,
+        },
+      },
+    ]);
+    return res.status(200).send(matchResults);
+  } catch (error) {
+    return res.status(400).send({ success: false, message: error.message });
+  }
 });
 
 // delete match result
