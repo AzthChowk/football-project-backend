@@ -136,23 +136,27 @@ router.put("/player/edit/:id", isAdmin, async (req, res) => {
 });
 
 //delete the player
-router.delete("/player/delete/:id", isAdmin, (req, res) => {
-  //   const playerIdToDelete = req.params.id;
-  // console.log(playerIdToDelete);
+router.delete("/player/delete/:id", isAdmin, async (req, res) => {
+  const playerIdToDelete = req.params.id;
+  console.log(playerIdToDelete);
 
-  // //check the validity of mongoId.
-  // const checkPlayerIdToDelete = checkMongoIdValidity(playerIdToDelete);
-  // if (!checkPlayerIdToDelete) {
-  //   return res.status(400).send("The player id is not valid.");
-  // }
+  //check the validity of mongoId.
+  const checkPlayerIdToDelete = checkMongoIdValidity(playerIdToDelete);
+  if (!checkPlayerIdToDelete) {
+    return res.status(400).send("The player id is not valid.");
+  }
 
-  // // check the player existence
-
-  // const updatePlayer = await Player.findOne({ _id: playerIdToDelete });
-  // if (!updatePlayer) {
-  //   return res.status(400).send("The player does not exist.");
-  // }
-  return res.status(200).send("Deleting.");
+  // check the player existence
+  const findPlayer = await Player.findOne({ _id: playerIdToDelete });
+  if (!findPlayer) {
+    return res.status(400).send("The player does not exist.");
+  }
+  try {
+    await Player.deleteOne({ _id: playerIdToDelete });
+    return res.status(200).send("The player is successfully deleted.");
+  } catch (error) {
+    return res.status(200).send({ success: false, message: error.message });
+  }
 });
 
 export default router;
