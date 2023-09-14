@@ -142,23 +142,27 @@ router.post("/fixtures/upcoming", async (req, res) => {
 // delete fixture
 router.delete("/fixture/delete/:id", async (req, res) => {
   try {
-    const inputDeleteId = req.params.id;
-    console.log(inputDeleteId);
+    const inputFixtureIdToDelete = req.params.id;
+    console.log(inputFixtureIdToDelete);
 
     //check the mongo id validity for input
-    const checkInputDeleteIdMongoId = checkMongoIdValidity(inputDeleteId);
-    if (!checkInputDeleteIdMongoId) {
+    const checkInputFixtureIdToDeleteMongoId = checkMongoIdValidity(
+      inputFixtureIdToDelete
+    );
+    if (!checkInputFixtureIdToDeleteMongoId) {
       return res.status(400).send("The input id is not valid Id.");
     }
 
     //find the match existence
-    const findDeleteFixture = await Fixture.findOne({ _id: inputDeleteId });
+    const findDeleteFixture = await Fixture.findOne({
+      _id: inputFixtureIdToDelete,
+    });
     if (!findDeleteFixture) {
       return res
         .status(404)
         .send("The match with the given id does not exist.");
     }
-    await Fixture.deleteOne({ _id: inputDeleteId });
+    await Fixture.deleteOne({ _id: inputFixtureIdToDelete });
     return res.status(200).send("The fixture is deleted successfully.");
   } catch (error) {
     return res.status(400).send({ success: false, message: error.message });

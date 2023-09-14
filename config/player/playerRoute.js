@@ -3,7 +3,7 @@ import express from "express";
 import { isAdmin } from "../../auth/authorization-middleware.js";
 import Joi from "joi";
 import { checkMongoIdValidity } from "../../utils/utils.js";
-import { playerValiditySchema } from "./player-validation.js";
+import { playerValidationSchema } from "./player-validation.js";
 import { Team } from "../team/teamModel.js";
 
 import mongoose from "mongoose";
@@ -13,7 +13,9 @@ const router = express.Router();
 router.post("/player/create", isAdmin, async (req, res) => {
   const newPlayer = req.body;
   try {
-    const validatePlayer = await playerValiditySchema.validateAsync(newPlayer);
+    const validatePlayer = await playerValidationSchema.validateAsync(
+      newPlayer
+    );
     if (!validatePlayer) return res.status(400).send("Error on Validation.");
     const findCurrentClubExistence = await Team.findOne({
       _id: validatePlayer.currentClub,
@@ -67,73 +69,90 @@ router.post("/players", async (req, res) => {
 });
 
 //get the player
-router.post("/player/:id", async (req, res) => {
+router.post("/player/details/:id", async (req, res) => {
   const inputPlayerId = req.params.id;
-
-  //check mongoid validiity
-  const resultOfMongoIdValidityCheck = checkMongoIdValidity(inputPlayerId);
-
-  if (!resultOfMongoIdValidityCheck) {
-    return res.status(400).send("The MongoId is not valid.");
-  }
-
   try {
-    const teamName = await Player.aggregate([
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(inputPlayerId),
-        },
-      },
-      {
-        $lookup: {
-          from: "teams",
-          localField: "currentClub",
-          foreignField: "_id",
-          as: "result",
-        },
-      },
-      {
-        $project: {
-          firstName: 1,
-          clubName: { $first: "$result.name" },
-        },
-      },
-    ]);
+    //check mongoid validity
+    const resultOfMongoIdValidityCheck = checkMongoIdValidity(inputPlayerId);
 
-    console.log("hi", teamName);
-    console.log(teamName[0].result);
+    if (!resultOfMongoIdValidityCheck) {
+      return res.status(400).send("The MongoId is not valid.");
+    }
 
-    // const teamName = await Team.findOne({ _id: player.currentClub });
-    // console.log(teamName.name);
-    // player.currentClub = teamName.name;
+    const player = await Player.findOne({ _id: inputPlayerId });
     return res.status(200).send(player);
   } catch (error) {
     return res.status(400).send("The player does not exist.");
   }
 });
 
-export default router;
+//edit the player
+router.put("/player/edit/:id", isAdmin, async (req, res) => {
+  const playerIdToEdit = req.params.id;
+  const updatePlayer = req.body;
 
-// [
-//   {
-//     $match: {
-//       _id: ObjectId("64e9676062727a6f0c209fdf"),
-//     },
-//   },
-//   {
-//     $lookup: {
-//       from: "teams",
-//       localField: "currentClub",
-//       foreignField: "_id",
-//       as: "result",
-//     },
-//   },
-//   {
-//     $project: {
-//       fullname: {
-//         $concat: ["$firstName", " ", "$middleName", " ", "$lastName"],
-//       },
-//       clubName: { $first: "$result.name" },
-//     },
-//   },
-// ];
+  //check the validity of mongoId.
+  const checkPlayerIdToEdit = checkMongoIdValidity(playerIdToEdit);
+  if (!checkPlayerIdToEdit) {
+    return res.status(400).send("The player id is not valid.");
+  }
+
+  // validate the input
+  try {
+    await playerValidationSchema.validateAsync(updatePlayer);
+  } catch (error) {
+    return res.status(400).send({ success: false, message: error.message });
+  }
+
+  //proceed further if input is validated.
+  try {
+    // find the player existence
+    const findPlayer = await Player.findOne({ _id: playerIdToEdit });
+    if (!findPlayer) {
+      return res.status(400).send("The player does not exist.");
+    }
+
+    // update the player
+    await Player.updateOne(
+      { _id: playerIdToEdit },
+      {
+        $set: {
+          firstName: updatePlayer.firstName,
+          middleName: updatePlayer.middleName,
+          lastName: updatePlayer.lastName,
+          playerImage: updatePlayer.playerImage,
+          position: updatePlayer.position,
+          dob: updatePlayer.dob,
+          nationality: updatePlayer.nationality,
+          currentClub: updatePlayer.currentClub,
+        },
+      }
+    );
+
+    return res.status(200).send("The player details is updated successfully.");
+  } catch (error) {
+    return res.status(400).send({ success: false, message: error.message });
+  }
+});
+
+//delete the player
+router.delete("/player/delete/:id", isAdmin, (req, res) => {
+  //   const playerIdToDelete = req.params.id;
+  // console.log(playerIdToDelete);
+
+  // //check the validity of mongoId.
+  // const checkPlayerIdToDelete = checkMongoIdValidity(playerIdToDelete);
+  // if (!checkPlayerIdToDelete) {
+  //   return res.status(400).send("The player id is not valid.");
+  // }
+
+  // // check the player existence
+
+  // const updatePlayer = await Player.findOne({ _id: playerIdToDelete });
+  // if (!updatePlayer) {
+  //   return res.status(400).send("The player does not exist.");
+  // }
+  return res.status(200).send("Deleting.");
+});
+
+export default router;
