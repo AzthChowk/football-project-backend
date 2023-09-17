@@ -1,4 +1,5 @@
 import { Admin } from "./adminModel.js";
+import bcrypt from "bcrypt";
 
 export const createAdmin = async (req, res) => {
   //validated data from joi - req.adminData
@@ -17,12 +18,13 @@ export const createAdmin = async (req, res) => {
     await Admin.create(newAdminAfterValidation);
     return res.status(201).send({
       success: true,
-      message: "ADMIN CREATED SUCCESSFUL.",
+      message: "Admin created successfully.",
     });
   } catch (error) {
     return res.status(400).send({
       success: false,
       message: error.message,
+      error,
     });
   }
 };

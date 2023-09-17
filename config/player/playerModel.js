@@ -20,9 +20,9 @@ const playerSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    playerImage: {
+    playerImageUrl: {
       type: String,
-      required: true,
+      required: false,
     },
     position: {
       type: String,

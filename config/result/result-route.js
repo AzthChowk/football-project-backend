@@ -5,11 +5,12 @@ import { resultValidationSchema } from "./result-validation.js";
 import { checkMongoIdValidity } from "../../utils/utils.js";
 import { Team } from "../team/teamModel.js";
 import { ObjectId } from "mongodb";
+import { isAdmin } from "../../auth/authorization-middleware.js";
 
 const router = express.Router();
 
 // post match result
-router.post("/matchresult/add", async (req, res) => {
+router.post("/matchresult/create", async (req, res) => {
   const newMatchResult = req.body;
   //validate the inputs
   try {
@@ -23,7 +24,9 @@ router.post("/matchresult/add", async (req, res) => {
     matchNumber: newMatchResult.matchNumber,
   });
   if (findMatchNumberExistenceInResult) {
-    return res.status(400).send("This match result is already posted.");
+    return res
+      .status(400)
+      .send({ message: "This match result is already posted." });
   }
 
   // find whether there is match or not?
@@ -33,14 +36,12 @@ router.post("/matchresult/add", async (req, res) => {
   });
 
   if (!findMatchNumberExistenceInFixture) {
-    console.log(
-      `The given match number ${newMatchResult.matchNumber} does not exist.`
-    );
-    return res
-      .status(404)
-      .send(
-        `The given match number ${newMatchResult.matchNumber} does not exist.`
-      );
+    console.log({
+      message: `The given match number ${newMatchResult.matchNumber} does not exist.`,
+    });
+    return res.status(404).send({
+      message: `The given match number ${newMatchResult.matchNumber} does not exist.`,
+    });
   }
 
   //check the validity of mongoId
@@ -48,7 +49,7 @@ router.post("/matchresult/add", async (req, res) => {
     newMatchResult.opponentOne
   );
   if (!checkOpponentOneMongoId) {
-    return res.status(400).send("Opponent One - Invalid MongoId.");
+    return res.status(400).send({ message: "Opponent One - Invalid MongoId." });
   }
 
   // if valid, find whether the team exist or not
@@ -58,7 +59,9 @@ router.post("/matchresult/add", async (req, res) => {
 
   //if not found, return error
   if (!findOpponentOne) {
-    return res.status(404).send("The given first team does not exist.");
+    return res
+      .status(404)
+      .send({ message: "The given first team does not exist." });
   }
 
   //check the validity of mongoId
@@ -66,7 +69,7 @@ router.post("/matchresult/add", async (req, res) => {
     newMatchResult.opponentTwo
   );
   if (!checkOpponentTwoMongoId) {
-    return res.status(400).send("Opponent Two - Invalid MongoId.");
+    return res.status(400).send({ message: "Opponent Two - Invalid MongoId." });
   }
 
   // if valid, find whether the team exist or not
@@ -75,7 +78,9 @@ router.post("/matchresult/add", async (req, res) => {
   });
   //if not found, return error
   if (!findOpponentTwo) {
-    return res.status(404).send("The given second team does not exist.");
+    return res
+      .status(404)
+      .send({ message: "The given second team does not exist." });
   }
 
   //check the whether the opponent are same as in the fixture or not?
@@ -149,9 +154,9 @@ router.get("/results", async (req, res) => {
         $project: {
           _id: 0,
           matchNumber: 1,
-          opponentOneName: { $first: "$opponentOneName.name" },
-          opponentTwoName: { $first: "$opponentTwoName.name" },
-          winnerName: { $first: "$winnerName.name" },
+          opponentOneName: { $first: "$opponentOneName.teamName" },
+          opponentTwoName: { $first: "$opponentTwoName.teamName" },
+          winnerName: { $first: "$winnerName.teamName" },
           opponentOneGoalScore: 1,
           opponentTwoGoalScore: 1,
         },
@@ -169,8 +174,91 @@ router.get("/results", async (req, res) => {
 });
 
 // delete match result
-router.delete("/result/delete", async (req, res) => {
+router.delete("/result/deleteall", async (req, res) => {
   await Result.deleteMany({});
-  return res.status(200).send("All Deleted.");
+  return res.status(200).send({ message: "All Deleted." });
 });
+
+//edit match result
+router.put("/result/edit/:id", isAdmin, async (req, res) => {
+  const editResultId = req.params.id;
+  const updateResult = req.body;
+  console.log(editResultId);
+
+  //validate input
+  try {
+    await resultValidationSchema.validateAsync(updateResult);
+  } catch (error) {
+    return res.status(400).send({ success: false, message: error.message });
+  }
+
+  // check MongoId
+  const checkEditResultIdMongoIdValidity = checkMongoIdValidity(editResultId);
+  if (!checkEditResultIdMongoIdValidity) {
+    return res
+      .status(400)
+      .send({ message: "The given input id is not valid id." });
+  }
+
+  //check the result existence
+  const findResult = await Result.findOne({ _id: editResultId });
+  if (!findResult) {
+    return res
+      .status(400)
+      .send({ message: "The given result id does not exist." });
+  }
+  try {
+    await Result.updateOne(
+      { _id: editResultId },
+      {
+        $set: {
+          isMatchFinished: updateResult.isMatchFinished,
+          matchNumber: updateResult.matchNumber,
+          opponentOne: updateResult.opponentOne,
+          opponentTwo: updateResult.opponentTwo,
+          opponentOneGoalScore: updateResult.opponentOneGoalScore,
+          opponentTwoGoalScore: updateResult.opponentTwoGoalScore,
+        },
+      }
+    );
+
+    return res
+      .status(200)
+      .send({ message: "The match result is updated successfully." });
+  } catch (error) {}
+});
+
+//delete match result
+router.delete("/result/delete/:id", isAdmin, async (req, res) => {
+  const deleteResultId = req.params.id;
+  console.log(deleteResultId);
+
+  // check MongoId
+  const checkDeleteResultIdMongoIdValidity =
+    checkMongoIdValidity(deleteResultId);
+  if (!checkDeleteResultIdMongoIdValidity) {
+    return res
+      .status(400)
+      .send({ message: "The given input id is not valid id." });
+  }
+
+  //check the result existence
+  const findResult = await Result.findOne({ _id: deleteResultId });
+  if (!findResult) {
+    return res
+      .status(400)
+      .send({ message: "The given result id does not exist." });
+  }
+
+  // perform delete operation
+  try {
+    await Result.deleteOne({ _id: deleteResultId });
+    return res
+      .status(200)
+      .send({ message: "The result is deleted successfully." });
+  } catch (error) {
+    return res.status(400).send({ success: false, message: error.message });
+  }
+});
+
 export default router;

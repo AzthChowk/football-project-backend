@@ -13,7 +13,7 @@ export const isAdmin = async (req, res, next) => {
     if (!findUser) {
       return res.status(400).send({ success: false, message: "Unauthorized." });
     }
-    if (findUser.role !== "administrator") {
+    if (findUser.role !== "Administrator") {
       return res
         .status(400)
         .send({ success: false, message: "Unauthorized, You are not admin." });

@@ -10,8 +10,8 @@ const adminSchema = new mongoose.Schema({
   },
   middleName: {
     type: String,
-    minlength: 2,
-    maxlength: 55,
+    nullable: true,
+    maxlength: 15,
     trim: true,
   },
   lastName: {
@@ -41,16 +41,10 @@ const adminSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
-  mobileNumber: {
-    type: String,
-    required: true,
-    minlength: 10,
-    maxlength: 10,
-    trim: true,
-  },
+
   role: {
     type: String,
-    default: "administrator",
+    default: "Administrator",
   },
 });
 export const Admin = mongoose.model("Admin", adminSchema);

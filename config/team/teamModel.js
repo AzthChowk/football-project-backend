@@ -1,16 +1,15 @@
 import mongoose from "mongoose";
 
 const teamSchema = new mongoose.Schema({
-  name: {
+  teamName: {
     type: String,
     minlength: 4,
     maxlength: 50,
     trim: true,
     required: true,
   },
-  logo: {
+  teamLogo: {
     type: String,
-    required: true,
   },
   address: {
     type: String,

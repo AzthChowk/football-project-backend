@@ -2,24 +2,23 @@ import express from "express";
 import { Team } from "./teamModel.js";
 import { checkMongoIdValidity } from "../../utils/utils.js";
 import { isAdmin } from "../../auth/authorization-middleware.js";
+import { teamValidationSchema } from "./teamValidation.js";
 
 const router = express.Router();
 
 // POST
 router.post("/team/create", isAdmin, async (req, res) => {
   const newTeam = req.body;
-  console.log(newTeam);
-  const createNewTeam = await Team.create(newTeam);
-  if (!createNewTeam) {
-    res.status(400).send({
-      success: false,
-      message: "FAILED",
+  try {
+    await teamValidationSchema.validateAsync(newTeam);
+    await Team.create(newTeam);
+    return res.status(201).send({
+      success: true,
+      message: "Team created successfully.",
     });
+  } catch (error) {
+    return res.status(400).send({ success: false, message: error.message });
   }
-  res.status(201).send({
-    success: true,
-    message: "TEAM CREATED SUCCESSFULLY.",
-  });
 });
 
 // GET ALL TEAMS
@@ -69,6 +68,12 @@ router.delete("/team/delete/:id", isAdmin, async (req, res) => {
   } catch (error) {
     return res.status(400).send(error.message);
   }
+});
+
+//delete all
+router.delete("/teams/alldelete", async (req, res) => {
+  await Team.deleteMany({});
+  return res.status(200).send("all deleted.");
 });
 
 export default router;

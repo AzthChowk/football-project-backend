@@ -16,6 +16,16 @@ const router = express.Router();
 //create fixture
 router.post("/fixture/create", isAdmin, async (req, res) => {
   const newFixture = req.body;
+
+  const checkMatchNumber = await Fixture.findOne({
+    matchNumber: newFixture.matchNumber,
+  });
+  if (checkMatchNumber) {
+    return res
+      .status(400)
+      .send({ message: "The given match number already exist." });
+  }
+
   // validate the input
   try {
     await fixtureValidateSchema.validateAsync(newFixture);
@@ -31,7 +41,9 @@ router.post("/fixture/create", isAdmin, async (req, res) => {
   const findOpponentOne = await Team.findOne({ _id: newFixture.opponentOne });
   //if not found, return error
   if (!findOpponentOne) {
-    return res.status(404).send("The given first team does not exist.");
+    return res
+      .status(404)
+      .send({ message: "The given first team does not exist." });
   }
 
   //check the validity of mongoId
@@ -43,18 +55,22 @@ router.post("/fixture/create", isAdmin, async (req, res) => {
   const findOpponentTwo = await Team.findOne({ _id: newFixture.opponentTwo });
   //if not found, return error
   if (!findOpponentTwo) {
-    return res.status(404).send("The given second team does not exist.");
+    return res
+      .status(404)
+      .send({ message: "The given second team does not exist." });
   }
 
   // check whether the teams are different or not?
   if (newFixture.opponentOne === newFixture.opponentTwo) {
-    return res.status(400).send("Opponent teams cannot be same team.");
+    return res
+      .status(400)
+      .send({ message: "Opponent teams cannot be same team." });
   }
   try {
     await Fixture.create(newFixture);
     return res.status(201).send({
       success: true,
-      message: "New Fixture created successfully.",
+      message: "New match is created successfully.",
     });
   } catch (error) {
     return res.status(400).send({ success: false, message: error.message });
@@ -87,10 +103,10 @@ router.post("/fixtures", async (req, res) => {
       $project: {
         _id: 0,
         matchNumber: 1,
-        opponentOneName: { $first: "$opponentOneRes.name" },
-        opponentOneLogo: { $first: "$opponentOneRes.logo" },
-        opponentTwoName: { $first: "$opponentTwoRes.name" },
-        opponentTwoLogo: { $first: "$opponentTwoRes.logo" },
+        opponentOneName: { $first: "$opponentOneRes.teamName" },
+        opponentOneLogo: { $first: "$opponentOneRes.teamLogo" },
+        opponentTwoName: { $first: "$opponentTwoRes.teamName" },
+        opponentTwoLogo: { $first: "$opponentTwoRes.teamLogo" },
         time: 1,
         date: 1,
         playGround: 1,
@@ -123,13 +139,16 @@ router.post("/fixtures/upcoming", async (req, res) => {
       },
     },
     {
+      $limit: 7,
+    },
+    {
       $project: {
         _id: 0,
         matchNumber: 1,
-        opponentOneName: { $first: "$opponentOneRes.name" },
-        opponentOneLogo: { $first: "$opponentOneRes.logo" },
-        opponentTwoName: { $first: "$opponentTwoRes.name" },
-        opponentTwoLogo: { $first: "$opponentTwoRes.logo" },
+        opponentOneName: { $first: "$opponentOneRes.teamName" },
+        opponentOneLogo: { $first: "$opponentOneRes.teamLogo" },
+        opponentTwoName: { $first: "$opponentTwoRes.teamName" },
+        opponentTwoLogo: { $first: "$opponentTwoRes.teamLogo" },
         time: 1,
         date: 1,
         playGround: 1,
@@ -140,7 +159,7 @@ router.post("/fixtures/upcoming", async (req, res) => {
 });
 
 // delete fixture
-router.delete("/fixture/delete/:id", async (req, res) => {
+router.delete("/fixture/delete/:id", isAdmin, async (req, res) => {
   try {
     const inputFixtureIdToDelete = req.params.id;
     console.log(inputFixtureIdToDelete);
@@ -167,6 +186,12 @@ router.delete("/fixture/delete/:id", async (req, res) => {
   } catch (error) {
     return res.status(400).send({ success: false, message: error.message });
   }
+});
+
+// delete fixture all
+router.delete("/fixture/deleteall", isAdmin, async (req, res) => {
+  await Fixture.deleteMany({});
+  return res.status(200).send("The fixture is deleted successfully.");
 });
 
 // edit fixture

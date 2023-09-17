@@ -24,7 +24,9 @@ router.post("/player/create", isAdmin, async (req, res) => {
     if (!findCurrentClubExistence)
       return res.status(400).send("No Team found.");
     await Player.create(newPlayer);
-    return res.status(201).send("Player added successfully.");
+    return res
+      .status(201)
+      .send({ success: true, message: "New Player is added successfully." });
   } catch (error) {
     return res.status(400).send(error.message);
   }
@@ -50,8 +52,8 @@ router.post("/players", async (req, res) => {
           fullName: {
             $concat: ["$firstName", " ", "$middleName", " ", "$lastName"],
           },
-          clubName: { $first: "$result.name" },
-          playerImage: 1,
+          clubName: { $first: "$result.teamName" },
+          playerImageUrl: 1,
           position: 1,
           dob: 1,
           nationality: 1,
@@ -120,7 +122,7 @@ router.put("/player/edit/:id", isAdmin, async (req, res) => {
           firstName: updatePlayer.firstName,
           middleName: updatePlayer.middleName,
           lastName: updatePlayer.lastName,
-          playerImage: updatePlayer.playerImage,
+          playerImageUrl: updatePlayer.playerImage,
           position: updatePlayer.position,
           dob: updatePlayer.dob,
           nationality: updatePlayer.nationality,
@@ -157,6 +159,12 @@ router.delete("/player/delete/:id", isAdmin, async (req, res) => {
   } catch (error) {
     return res.status(200).send({ success: false, message: error.message });
   }
+});
+
+//delete all player - for checking only
+router.delete("/players/deleteall", isAdmin, async (req, res) => {
+  await Player.deleteMany({});
+  return res.status(200).send("All players deleted successfully.");
 });
 
 export default router;
