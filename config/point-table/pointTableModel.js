@@ -40,4 +40,4 @@ const pointTableSchema = new mongoose.Schema({
   },
 });
 
-export const pointTable = mongoose.model("PointTable", pointTableSchema);
+export const PointTable = mongoose.model("PointTable", pointTableSchema);

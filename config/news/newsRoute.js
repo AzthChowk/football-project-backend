@@ -25,25 +25,6 @@ router.get("/news", async (req, res) => {
   }
 });
 
-//GET news details
-router.get("/news/:id", async (req, res) => {
-  const newsId = req.params.id;
-  try {
-    const checkNewsIdMongoId = checkMongoIdValidity(newsId);
-    if (!checkNewsIdMongoId) {
-      return res.status(400).send({ message: "The given id is not valid." });
-    }
-    const getNews = await News.findOne({ _id: newsId });
-    return res.status(200).send(getNews);
-  } catch (error) {
-    console.log(error.message);
-    return res.status(400).send({
-      success: false,
-      message: "Cannot get the news",
-    });
-  }
-});
-
 //GET latest news - home page
 router.get("/news/latest", async (req, res) => {
   try {
@@ -67,6 +48,7 @@ router.get("/news/latest", async (req, res) => {
     });
   }
 });
+
 //GET featured news - home page
 router.get("/news/featured", async (req, res) => {
   try {
@@ -87,6 +69,25 @@ router.get("/news/featured", async (req, res) => {
     return res.status(400).send({
       success: false,
       message: "CANNOT GET NEWS",
+    });
+  }
+});
+
+//GET news details
+router.get("/news/:id", async (req, res) => {
+  const newsId = req.params.id;
+  try {
+    const checkNewsIdMongoId = checkMongoIdValidity(newsId);
+    if (!checkNewsIdMongoId) {
+      return res.status(400).send({ message: "The given id is not valid." });
+    }
+    const getNews = await News.findOne({ _id: newsId });
+    return res.status(200).send(getNews);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(400).send({
+      success: false,
+      message: "Cannot get the news",
     });
   }
 });

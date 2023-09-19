@@ -6,6 +6,11 @@ import { checkMongoIdValidity } from "../../utils/utils.js";
 import { Team } from "../team/teamModel.js";
 import { ObjectId } from "mongodb";
 import { isAdmin } from "../../auth/authorization-middleware.js";
+import { PointTable } from "../point-table/pointTableModel.js";
+import {
+  checkMatchResult,
+  insertAndUpdatePointTable,
+} from "../point-table/pointsTableService.js";
 
 const router = express.Router();
 
@@ -99,24 +104,49 @@ router.post("/matchresult/create", async (req, res) => {
   }
 
   //check winner
-  console.log(
-    newMatchResult.opponentTwoGoalScore > newMatchResult.opponentOneGoalScore
+
+  // if (
+  //   newMatchResult.opponentOneGoalScore > newMatchResult.opponentTwoGoalScore
+  // ) {
+  //   newMatchResult.winnerId = new ObjectId(req.body.opponentOne);
+  // }
+  // if (
+  //   newMatchResult.opponentTwoGoalScore > newMatchResult.opponentOneGoalScore
+  // ) {
+  //   newMatchResult.winnerId = new ObjectId(req.body.opponentTwo);
+  // }
+
+  // check result
+  const checkWinner = checkMatchResult(
+    newMatchResult.opponentOneGoalScore,
+    newMatchResult.opponentTwoGoalScore
   );
-  if (
-    newMatchResult.opponentOneGoalScore > newMatchResult.opponentTwoGoalScore
-  ) {
-    newMatchResult.winnerId = new ObjectId(req.body.opponentOne);
+
+  // post the result and update point table
+  try {
+    // For opponentOne
+    insertAndUpdatePointTable(
+      newMatchResult.opponentOne,
+      newMatchResult.opponentOneGoalScore,
+      newMatchResult.opponentTwoGoalScore,
+      checkWinner
+    );
+
+    // For opponentTwo
+    insertAndUpdatePointTable(
+      newMatchResult.opponentTwo,
+      newMatchResult.opponentTwoGoalScore,
+      newMatchResult.opponentOneGoalScore,
+      checkWinner
+    );
+
+    await Result.create(newMatchResult);
+    return res
+      .status(201)
+      .send({ success: true, message: "Match result is added successfully." });
+  } catch (error) {
+    return res.status(400).send({ success: false, message: error.message });
   }
-  if (
-    newMatchResult.opponentTwoGoalScore > newMatchResult.opponentOneGoalScore
-  ) {
-    newMatchResult.winnerId = new ObjectId(req.body.opponentTwo);
-  }
-  console.log(newMatchResult);
-  await Result.create(newMatchResult);
-  return res
-    .status(201)
-    .send({ success: true, message: "Match result is successfully added." });
 });
 
 // display results
