@@ -4,7 +4,7 @@ import connectDB from "./dbconnect.js";
 import cors from "cors";
 
 //router
-import adminRouter from "./config/admin/adminRoute.js";
+import userRouter from "./config/user/userRoute.js";
 import pointTableRouter from "./config/point-table/pointsTableRoute.js";
 import teamRouter from "./config/team/teamRoute.js";
 import playerRoute from "./config/player/playerRoute.js";
@@ -55,7 +55,7 @@ app.get("/", (req, res) => {
 });
 
 //USE ROUTES
-app.use(adminRouter);
+app.use(userRouter);
 app.use(teamRouter);
 app.use(playerRoute);
 app.use(pointTableRouter);
