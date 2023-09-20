@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { User } from "../user/userModel.js";
 
 const newsModel = new mongoose.Schema({
   newsTitle: {
@@ -8,10 +9,9 @@ const newsModel = new mongoose.Schema({
     minlength: 10,
   },
   newsAuthor: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: User,
     required: true,
-    maxlength: 55,
-    minlength: 10,
   },
   fullNews: {
     type: String,
@@ -36,9 +36,9 @@ const newsModel = new mongoose.Schema({
     type: String,
     enum: ["abc", "xyz"],
   },
-  // tags: {
-  //   type: Array,
-  // },
+  tags: {
+    type: Array,
+  },
 });
 
 export const News = mongoose.model("News", newsModel);

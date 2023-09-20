@@ -10,6 +10,7 @@ export const validateNews = async (req, res, next) => {
     isFeaturedNews: Joi.boolean(),
     newsImgUrl: Joi.string(),
     category: Joi.string().valid("abc", "xyz"),
+    tags: Joi.string().allow(null).allow(""),
   });
   try {
     const validatedNews = await schema.validateAsync(newNews);
