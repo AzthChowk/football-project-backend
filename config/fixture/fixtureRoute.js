@@ -35,7 +35,7 @@ router.post("/fixture/create", isAdmin, async (req, res) => {
   //check the validity of mongoId
   const checkOpponentOneMongoId = checkMongoIdValidity(newFixture.opponentOne);
   if (!checkOpponentOneMongoId) {
-    return res.status(400).send("Invalid MongoId.");
+    return res.status(400).send({ message: "Invalid MongoId." });
   }
   // if valid, find whether the team exist or not
   const findOpponentOne = await Team.findOne({ _id: newFixture.opponentOne });

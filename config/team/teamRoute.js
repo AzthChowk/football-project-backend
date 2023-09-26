@@ -3,6 +3,7 @@ import { Team } from "./teamModel.js";
 import { checkMongoIdValidity } from "../../utils/utils.js";
 import { isAdmin } from "../../auth/authorization-middleware.js";
 import { teamValidationSchema } from "./teamValidation.js";
+import { Player } from "../player/playerModel.js";
 
 const router = express.Router();
 
@@ -33,20 +34,70 @@ router.post("/teams", async (req, res) => {
   res.status(200).send(teamList);
 });
 
-// GET A TEAM
-router.get("/team/:id", async (req, res) => {
+// GET ALL TEAMS
+router.post("/team/:id/players", async (req, res) => {
   const teamId = req.params.id;
   console.log(teamId);
+
+  // check mongoid
+  const teamIdMongoIdValidity = checkMongoIdValidity(teamId);
+  if (!teamIdMongoIdValidity) {
+    return res.status(400).send({ message: "The input id is not valid." });
+  }
+
+  // find the team existence
+  const findTeam = await Team.findOne({ _id: teamId });
+  if (!findTeam) {
+    return res
+      .status(404)
+      .send({ message: "The team with the given id does not exist." });
+  }
+
+  //if team exist - search players
+  const teamPlayersList = await Player.find({ currentClub: teamId });
+  if (!teamPlayersList) {
+    return res.status(404).send({ message: "Players not found." });
+  }
+
+  // const teamPlayersList = await Player.aggregate([
+  //   { $match: { currentClub: teamId } },
+  //   {
+  //     $project: {
+  //       fullName: {
+  //         $concat: ["$firstName", " ", "$middleName", " ", "$lastName"],
+  //       },
+  //       playerImageUrl: 1,
+  //       position: 1,
+  //       dob: 1,
+  //       nationality: 1,
+  //     },
+  //   },
+  // ]);
+
+  res.status(200).send(teamPlayersList);
+});
+
+// GET A TEAM
+router.post("/team/:id", async (req, res) => {
+  const teamId = req.params.id;
+
   const resultOfMongoIdValidityCheck = checkMongoIdValidity(teamId);
   if (!resultOfMongoIdValidityCheck) {
     return res.status(400).send("The MongoId is not valid.");
   }
   try {
     const findTeam = await Team.findOne({ _id: teamId });
-    if (!findTeam) return res.status(400).send("Not found.");
+    if (!findTeam)
+      return res
+        .status(400)
+        .send({ message: "Team with the given id does not exist." });
+    const teamPlayersList = await Player.find({ currentClub: teamId });
+    if (!teamPlayersList) {
+      return res.status(404).send({ message: "Players not found." });
+    }
     return res.status(200).send(findTeam);
   } catch (error) {
-    return res.status(400).send(error.message);
+    return res.status(400).send({ message: error.message });
   }
 });
 // DELETE TEAM

@@ -76,7 +76,7 @@ export const userLogin = async (req, res) => {
   const accessToken = jwt.sign(
     { _id: findUser._id },
     process.env.JWT_ACCESS_TOKEN_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY }
   );
   findUser.password = "";
   return res
