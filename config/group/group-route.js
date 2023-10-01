@@ -7,13 +7,19 @@ const router = express.Router();
 //create group
 router.post("/group/create", isAdmin, async (req, res) => {
   const newGroup = req.body;
+  console.log(newGroup);
+  console.log("hi");
   try {
     await Group.create(newGroup);
-    return res.status(201).send(`${newGroup.name} created successfully.`);
+    return res
+      .status(201)
+      .send({ message: `${newGroup.name} created successfully.` });
   } catch (error) {
-    return res.status(400).send(error.message);
+    console.log(error.message);
+    return res.status(400).send({ message: error.message });
   }
 });
+
 //get group
 router.get("/group/:id", isAdmin, async (req, res) => {
   const inputSearchId = req.params.id;

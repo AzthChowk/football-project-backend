@@ -6,6 +6,11 @@ const fixtureSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  matchStage: {
+    type: String,
+    required: true,
+    enum: ["Group Stage", "Quarter Final", "Semi-Final", "Play off", "Final"],
+  },
   time: {
     type: String,
     required: true,
