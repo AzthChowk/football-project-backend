@@ -17,7 +17,7 @@ import matchResultRoute from "./config/result/result-route.js";
 dotenv.config();
 
 //DATABASE CONNECT
-connectDB();
+await connectDB();
 
 //REST OBJECT
 const app = express();

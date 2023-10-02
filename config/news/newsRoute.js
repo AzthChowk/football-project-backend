@@ -1,15 +1,17 @@
 import express from "express";
-import { News } from "./newsModel.js";
-import { createNews } from "./new-service.js";
-import { validateNews } from "./news-validation.js";
-import { isAdmin, isReporter } from "../../auth/authorization-middleware.js";
+import { isReporter } from "../../auth/authorization-middleware.js";
 import { checkMongoIdValidity } from "../../utils/utils.js";
+import { createNews, editNews } from "./new-service.js";
+import { News } from "./newsModel.js";
 
 // import News from "../models/newsModel.js";
 
 const router = express.Router();
 //POST
-router.post("/news/create", validateNews, createNews);
+router.post("/news/create", createNews);
+
+//Edit
+router.put("/news/edit/:id", editNews);
 
 //GET
 router.get("/news", async (req, res) => {
@@ -77,7 +79,7 @@ router.post("/reporter/news", isReporter, async (req, res) => {
       },
     },
   ]);
-  console.log(getReporterNewsOnly);
+
   return res.status(200).send(getReporterNewsOnly);
 });
 
@@ -85,6 +87,27 @@ router.post("/reporter/news", isReporter, async (req, res) => {
 router.delete("/news/deleteall", async (req, res) => {
   await News.deleteMany({});
   return res.status(200).send("All news deleted.");
+});
+
+//GET featured news - home page
+router.delete("/news/delete/:id", async (req, res) => {
+  const newsId = req.params.id;
+  const checkNewsIsMongoValidity = checkMongoIdValidity(newsId);
+  if (!checkNewsIsMongoValidity) {
+    return res
+      .status(400)
+      .send({ message: "The given id of the news is not valid mongo id." });
+  }
+
+  //find news
+  const findNews = await News.findOne({ _id: newsId });
+  if (!findNews) {
+    return res
+      .status(400)
+      .send({ message: "The given id of the news does not exist." });
+  }
+  await News.deleteOne({ _id: newsId });
+  return res.status(200).send({ message: "News is deleted successfully." });
 });
 
 //GET news details
@@ -101,7 +124,7 @@ router.get("/news/:id", async (req, res) => {
     console.log(error.message);
     return res.status(400).send({
       success: false,
-      message: "Cannot get the news",
+      message: error.message,
     });
   }
 });
