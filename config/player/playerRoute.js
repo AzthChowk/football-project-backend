@@ -151,11 +151,13 @@ router.delete("/player/delete/:id", isAdmin, async (req, res) => {
   // check the player existence
   const findPlayer = await Player.findOne({ _id: playerIdToDelete });
   if (!findPlayer) {
-    return res.status(400).send("The player does not exist.");
+    return res.status(400).send({ message: "The player does not exist." });
   }
   try {
     await Player.deleteOne({ _id: playerIdToDelete });
-    return res.status(200).send("The player is successfully deleted.");
+    return res
+      .status(200)
+      .send({ success: true, message: "The player is successfully deleted." });
   } catch (error) {
     return res.status(200).send({ success: false, message: error.message });
   }

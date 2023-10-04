@@ -114,7 +114,10 @@ router.delete("/team/delete/:id", isAdmin, async (req, res) => {
   try {
     const isDeleted = await Team.deleteOne({ _id: deleteId });
     if (isDeleted) {
-      return res.send("Deleted Successfully.");
+      return res.send({
+        success: true,
+        message: "The team is deleted successfully.",
+      });
     }
   } catch (error) {
     return res.status(400).send(error.message);

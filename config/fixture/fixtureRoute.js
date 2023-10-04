@@ -190,7 +190,9 @@ router.delete("/fixture/delete/:id", isAdmin, async (req, res) => {
         .send("The match with the given id does not exist.");
     }
     await Fixture.deleteOne({ _id: inputFixtureIdToDelete });
-    return res.status(200).send("The fixture is deleted successfully.");
+    return res
+      .status(200)
+      .send({ success: true, message: "The fixture is deleted successfully." });
   } catch (error) {
     return res.status(400).send({ success: false, message: error.message });
   }
