@@ -5,10 +5,10 @@ const resultSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  matchNumber: {
-    type: Number,
+  matchId: {
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
-    unique: true,
+    ref: "Fixture",
   },
   opponentOne: {
     type: mongoose.Schema.Types.ObjectId,
@@ -27,10 +27,6 @@ const resultSchema = new mongoose.Schema({
   opponentTwoGoalScore: {
     type: Number,
     default: 0,
-  },
-  winnerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Team",
   },
 });
 export const Result = mongoose.model("Result", resultSchema);

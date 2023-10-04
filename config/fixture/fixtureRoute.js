@@ -101,8 +101,9 @@ router.post("/fixtures", async (req, res) => {
     },
     {
       $project: {
-        _id: 0,
+        _id: 1,
         matchNumber: 1,
+        matchStage: 1,
         opponentOneName: { $first: "$opponentOneRes.teamName" },
         opponentOneLogo: { $first: "$opponentOneRes.teamLogo" },
         opponentTwoName: { $first: "$opponentTwoRes.teamName" },
@@ -143,7 +144,7 @@ router.post("/fixtures/upcoming", async (req, res) => {
     },
     {
       $project: {
-        _id: 0,
+        _id: 1,
         matchNumber: 1,
         opponentOneName: { $first: "$opponentOneRes.teamName" },
         opponentOneLogo: { $first: "$opponentOneRes.teamLogo" },
@@ -156,6 +157,13 @@ router.post("/fixtures/upcoming", async (req, res) => {
     },
   ]);
   return res.status(200).send(fixtureList);
+});
+
+// get the fixture - up coming
+router.get("/fixture/:id", async (req, res) => {
+  const matchId = req.params.id;
+  const fixtureDetail = await Fixture.findOne({ _id: matchId });
+  return res.status(200).send(fixtureDetail);
 });
 
 // delete fixture

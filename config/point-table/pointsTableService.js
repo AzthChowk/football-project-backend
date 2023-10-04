@@ -1,12 +1,11 @@
 import { PointTable } from "./pointTableModel.js";
 
-export const insertAndUpdatePointTable = async (id, gf, ga, checkWinner) => {
+export const insertAndUpdatePointTable = async (id, gf, ga) => {
   const gd = gf - ga;
   const pts = calculatePoints(gf, ga);
   const winCount = calculateWin(gf, ga);
   const drawCount = calculateDraw(gf, ga);
   const lossCount = calculateLoss(gf, ga);
-  console.log(pts);
 
   // find whether the team existence in point table
   const findTeam = await PointTable.findOne({ teamId: id });

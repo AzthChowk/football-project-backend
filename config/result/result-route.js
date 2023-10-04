@@ -1,153 +1,14 @@
 import express from "express";
-import { Result } from "./result-model.js";
-import { Fixture } from "../fixture/fixtureModel.js";
-import { resultValidationSchema } from "./result-validation.js";
-import { checkMongoIdValidity } from "../../utils/utils.js";
-import { Team } from "../team/teamModel.js";
-import { ObjectId } from "mongodb";
 import { isAdmin } from "../../auth/authorization-middleware.js";
-import { PointTable } from "../point-table/pointTableModel.js";
-import {
-  checkMatchResult,
-  insertAndUpdatePointTable,
-} from "../point-table/pointsTableService.js";
+import { checkMongoIdValidity } from "../../utils/utils.js";
+import { Result } from "./result-model.js";
+import { createResult } from "./result-service.js";
+import { resultValidationSchema } from "./result-validation.js";
 
 const router = express.Router();
 
 // post match result
-router.post("/matchresult/create", async (req, res) => {
-  const newMatchResult = req.body;
-  //validate the inputs
-  try {
-    await resultValidationSchema.validateAsync(newMatchResult);
-  } catch (error) {
-    return res.status(400).send({ success: false, message: error.message });
-  }
-
-  //check whether the match is already posted or not?
-  const findMatchNumberExistenceInResult = await Result.findOne({
-    matchNumber: newMatchResult.matchNumber,
-  });
-  if (findMatchNumberExistenceInResult) {
-    return res
-      .status(400)
-      .send({ message: "This match result is already posted." });
-  }
-
-  // find whether there is match or not?
-
-  const findMatchNumberExistenceInFixture = await Fixture.findOne({
-    matchNumber: newMatchResult.matchNumber,
-  });
-
-  if (!findMatchNumberExistenceInFixture) {
-    console.log({
-      message: `The given match number ${newMatchResult.matchNumber} does not exist.`,
-    });
-    return res.status(404).send({
-      message: `The given match number ${newMatchResult.matchNumber} does not exist.`,
-    });
-  }
-
-  //check the validity of mongoId
-  const checkOpponentOneMongoId = checkMongoIdValidity(
-    newMatchResult.opponentOne
-  );
-  if (!checkOpponentOneMongoId) {
-    return res.status(400).send({ message: "Opponent One - Invalid MongoId." });
-  }
-
-  // if valid, find whether the team exist or not
-  const findOpponentOne = await Team.findOne({
-    _id: newMatchResult.opponentOne,
-  });
-
-  //if not found, return error
-  if (!findOpponentOne) {
-    return res
-      .status(404)
-      .send({ message: "The given first team does not exist." });
-  }
-
-  //check the validity of mongoId
-  const checkOpponentTwoMongoId = checkMongoIdValidity(
-    newMatchResult.opponentTwo
-  );
-  if (!checkOpponentTwoMongoId) {
-    return res.status(400).send({ message: "Opponent Two - Invalid MongoId." });
-  }
-
-  // if valid, find whether the team exist or not
-  const findOpponentTwo = await Team.findOne({
-    _id: newMatchResult.opponentTwo,
-  });
-  //if not found, return error
-  if (!findOpponentTwo) {
-    return res
-      .status(404)
-      .send({ message: "The given second team does not exist." });
-  }
-
-  //check the whether the opponent are same as in the fixture or not?
-  const opponentOneMongoId = new ObjectId(newMatchResult.opponentOne);
-  const opponentTwoMongoId = new ObjectId(newMatchResult.opponentTwo);
-
-  const checkSameTeamOrNot =
-    findMatchNumberExistenceInFixture.opponentOne.equals(opponentOneMongoId) &&
-    findMatchNumberExistenceInFixture.opponentTwo.equals(opponentTwoMongoId);
-
-  if (!checkSameTeamOrNot) {
-    return res.status(400).send({
-      message:
-        "Either the opponents are not as in the fixture or the match number is mismatched.",
-    });
-  }
-
-  //check winner
-
-  // if (
-  //   newMatchResult.opponentOneGoalScore > newMatchResult.opponentTwoGoalScore
-  // ) {
-  //   newMatchResult.winnerId = new ObjectId(req.body.opponentOne);
-  // }
-  // if (
-  //   newMatchResult.opponentTwoGoalScore > newMatchResult.opponentOneGoalScore
-  // ) {
-  //   newMatchResult.winnerId = new ObjectId(req.body.opponentTwo);
-  // }
-
-  // check result
-  const checkWinner = checkMatchResult(
-    newMatchResult.opponentOneGoalScore,
-    newMatchResult.opponentTwoGoalScore
-  );
-
-  // post the result and update point table
-  try {
-    // For opponentOne
-    insertAndUpdatePointTable(
-      newMatchResult.opponentOne,
-      newMatchResult.opponentOneGoalScore,
-      newMatchResult.opponentTwoGoalScore,
-      checkWinner
-    );
-
-    // For opponentTwo
-    insertAndUpdatePointTable(
-      newMatchResult.opponentTwo,
-      newMatchResult.opponentTwoGoalScore,
-      newMatchResult.opponentOneGoalScore,
-      checkWinner
-    );
-
-    await Result.create(newMatchResult);
-    return res
-      .status(201)
-      .send({ success: true, message: "Match result is added successfully." });
-  } catch (error) {
-    return res.status(400).send({ success: false, message: error.message });
-  }
-});
+router.post("/matchresult/create", createResult);
 
 // display results
 router.get("/results", async (req, res) => {
@@ -181,11 +42,25 @@ router.get("/results", async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "fixtures",
+          localField: "matchId",
+          foreignField: "_id",
+          as: "fixtureDetails",
+        },
+      },
+      {
         $project: {
           _id: 0,
-          matchNumber: 1,
           opponentOneName: { $first: "$opponentOneName.teamName" },
           opponentTwoName: { $first: "$opponentTwoName.teamName" },
+          opponentOneLogo: { $first: "$opponentOneName.teamLogo" },
+          opponentTwoLogo: { $first: "$opponentTwoName.teamLogo" },
+          matchNumber: { $first: "$fixtureDetails.matchNumber" },
+          playGround: { $first: "$fixtureDetails.playGround" },
+          time: { $first: "$fixtureDetails.time" },
+          date: { $first: "$fixtureDetails.date" },
+          matchStage: { $first: "$fixtureDetails.matchStage" },
           winnerName: { $first: "$winnerName.teamName" },
           opponentOneGoalScore: 1,
           opponentTwoGoalScore: 1,
@@ -243,7 +118,7 @@ router.put("/result/edit/:id", isAdmin, async (req, res) => {
       {
         $set: {
           isMatchFinished: updateResult.isMatchFinished,
-          matchNumber: updateResult.matchNumber,
+          matchId: updateResult.matchId,
           opponentOne: updateResult.opponentOne,
           opponentTwo: updateResult.opponentTwo,
           opponentOneGoalScore: updateResult.opponentOneGoalScore,
