@@ -51,6 +51,7 @@ router.get("/points/table", async (req, res) => {
           goalAgainst: 1,
           goalDifference: 1,
           points: 1,
+          teamId: 1,
         },
       },
       {
