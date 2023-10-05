@@ -14,7 +14,7 @@ const teamSchema = new mongoose.Schema({
   address: {
     type: String,
     minlength: 5,
-    maxlength: 50,
+    maxlength: 200,
     required: true,
   },
   group: {

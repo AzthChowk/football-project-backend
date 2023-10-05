@@ -27,6 +27,10 @@ const playerSchema = new mongoose.Schema(
     position: {
       type: String,
     },
+    jerseyNumber: {
+      type: Number,
+      required: true,
+    },
     dob: {
       type: Date,
       required: true,

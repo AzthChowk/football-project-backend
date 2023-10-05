@@ -6,6 +6,7 @@ export const playerValidationSchema = Joi.object({
   lastName: Joi.string().min(2).max(25).required(),
   playerImageUrl: Joi.string().allow(null).allow(""),
   position: Joi.string().min(4).max(15).required(),
+  jerseyNumber: Joi.number().min(0).max(100).required(),
   dob: Joi.date().required(),
   nationality: Joi.string().min(2).max(25).required(),
   currentClub: Joi.string().required(),
