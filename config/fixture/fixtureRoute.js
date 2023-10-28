@@ -113,6 +113,9 @@ router.post("/fixtures", async (req, res) => {
         playGround: 1,
       },
     },
+    {
+      $sort: { matchNumber: 1 },
+    },
   ]);
   return res.status(200).send(fixtureList);
 });

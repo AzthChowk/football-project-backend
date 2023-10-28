@@ -24,13 +24,21 @@ router.post("/team/create", isAdmin, async (req, res) => {
 
 // GET ALL TEAMS
 router.post("/teams", async (req, res) => {
-  const teamList = await Team.find({});
+  const teamList = await Team.aggregate([
+    {
+      $match: {},
+    },
+    {
+      $sort: { teamName: 1 },
+    },
+  ]);
   if (!teamList) {
     res.status(400).send({
       success: false,
       message: "CANNOT FETCH DATA",
     });
   }
+
   res.status(200).send(teamList);
 });
 
@@ -54,18 +62,17 @@ router.post("/team/:id/players", async (req, res) => {
   }
 
   //if team exist - search players
-  const teamPlayersList = await Player.find({ currentClub: teamId });
-  if (!teamPlayersList) {
-    return res.status(404).send({ message: "Players not found." });
-  }
-
+  const teamPlayersList = await Player.find({ currentClub: teamId }).sort({
+    jerseyNumber: 1,
+  });
   // const teamPlayersList = await Player.aggregate([
-  //   { $match: { currentClub: teamId } },
+  //   { $match: { currentClub: "651ba44b123874653232a0df" } },
   //   {
   //     $project: {
-  //       fullName: {
-  //         $concat: ["$firstName", " ", "$middleName", " ", "$lastName"],
-  //       },
+  //       _id: 1,
+  //       firstName: 1,
+  //       middleName: 1,
+  //       lastName: 1,
   //       playerImageUrl: 1,
   //       position: 1,
   //       dob: 1,
@@ -73,8 +80,11 @@ router.post("/team/:id/players", async (req, res) => {
   //     },
   //   },
   // ]);
+  if (!teamPlayersList) {
+    return res.status(404).send({ message: "Players not found." });
+  }
 
-  res.status(200).send(teamPlayersList);
+  return res.status(200).send(teamPlayersList);
 });
 
 // GET A TEAM
